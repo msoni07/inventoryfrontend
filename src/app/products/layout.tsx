@@ -1,7 +1,7 @@
-'use client'; 
+'use client';
 
 import AppLayout from '@/components/layout/AppLayout';
-import withAuth from '@/components/Auth/withAuth'; 
+import withAuthGuard from '@/Auth/withAuthGuard';
 import React from 'react';
 
 interface ProductsLayoutProps {
@@ -12,4 +12,4 @@ const ProductsPageLayout = ({ children }: ProductsLayoutProps) => {
   return <AppLayout>{children}</AppLayout>;
 };
 
-export default withAuth(ProductsPageLayout);
+export default withAuthGuard(ProductsPageLayout);

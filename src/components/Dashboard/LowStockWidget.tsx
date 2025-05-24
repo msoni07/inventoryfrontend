@@ -1,6 +1,6 @@
 'use client';
 
-import { PackageWarning } from 'lucide-react';
+import { Package } from 'lucide-react';
 
 export default function LowStockWidget() {
   // Mock Data
@@ -19,7 +19,7 @@ export default function LowStockWidget() {
     <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 ease-in-out">
       <div className="flex items-center space-x-4">
         <div className="flex-shrink-0 p-3 bg-red-100 rounded-full">
-          <PackageWarning className="h-7 w-7 text-red-600" />
+          <Package className="h-7 w-7 text-red-600" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-gray-500 truncate">Low Stock Items</p>
@@ -27,8 +27,8 @@ export default function LowStockWidget() {
         </div>
       </div>
       <div className="mt-5 text-right">
-        <a 
-          href="#" 
+        <a
+          href="#"
           onClick={(e) => e.preventDefault()} // Prevent default for now
           className="text-sm font-medium text-red-600 hover:text-red-700 transition-colors duration-150 ease-in-out"
         >

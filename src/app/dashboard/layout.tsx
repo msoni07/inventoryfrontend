@@ -1,15 +1,15 @@
-'use client'; 
+'use client';
 
 import AppLayout from '@/components/layout/AppLayout';
-import withAuth from '@/components/Auth/withAuth'; 
+import withAuthGuard from '@/Auth/withAuthGuard';
 import React from 'react';
 
 interface DashboardLayoutProps {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }
 
 const DashboardPageLayout = ({ children }: DashboardLayoutProps) => {
-  return <AppLayout>{children}</AppLayout>;
+    return <AppLayout>{children}</AppLayout>;
 };
 
-export default withAuth(DashboardPageLayout);
+export default withAuthGuard(DashboardPageLayout);

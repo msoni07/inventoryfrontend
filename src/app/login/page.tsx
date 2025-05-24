@@ -79,9 +79,9 @@ export default function LoginPage() {
           </div>
         )}
         {authError && !apiError && ( // Display Redux error if no specific API error is set (e.g., from previous attempts)
-            <div className="mb-6 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md text-sm">
-                <p>{authError}</p>
-            </div>
+          <div className="mb-6 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md text-sm">
+            <p>{authError}</p>
+          </div>
         )}
 
 
@@ -143,7 +143,7 @@ export default function LoginPage() {
             </button>
           </div>
         </form>
-         <p className="mt-8 text-center text-sm text-gray-600">
+        <p className="mt-8 text-center text-sm text-gray-600">
           Don&apos;t have an account?{' '}
           <a href="/signup" className="font-medium text-blue-600 hover:text-blue-500">
             Sign Up
