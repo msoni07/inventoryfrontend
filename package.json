@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@hookform/resolvers": "^5.0.1",
     "@reduxjs/toolkit": "^2.8.2",
     "axios": "^1.9.0",
     "date-fns": "^4.1.0",
@@ -21,6 +20,7 @@
     "react-hook-form": "^7.56.4",
     "react-hot-toast": "^2.5.2",
     "react-redux": "^9.2.0",
+    "recharts": "^2.15.3",
     "yup": "^1.6.1"
   },
   "devDependencies": {
