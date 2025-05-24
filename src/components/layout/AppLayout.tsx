@@ -16,6 +16,7 @@ import {
     Building // For Company/Brand
 } from 'lucide-react';
 import React from 'react';
+import { removeAuthCookie } from '@/utils/cookies';
 
 interface AppLayoutProps {
     children: React.ReactNode;
@@ -28,7 +29,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
     const handleLogout = () => {
         dispatch(setLogout());
-        localStorage.removeItem('token'); // Ensure key matches what's used in login
+        removeAuthCookie(); // Use the cookie utility
         router.push('/login');
     };
 

@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import type { RootState } from '@/redux/store';
 import React from 'react';
+import { getAuthCookie } from '@/utils/cookies';
 
 // Optional: Define a simple loading component
 const AuthLoading = () => (
@@ -23,22 +24,29 @@ export default function withAuthGuard<P extends object>(WrappedComponent: React.
     const AuthComponent = (props: P) => {
         const router = useRouter();
         const { isAuthenticated, isLoading: authSliceLoading } = useSelector((state: RootState) => state.auth);
+        const isAuthCookiePresent = getAuthCookie();
 
         useEffect(() => {
-            if (!authSliceLoading && !isAuthenticated) {
-                router.replace('/login');
+            // Redirect if not authenticated AND auth state has been determined
+            // Also redirect if there's no auth cookie but Redux state says isAuthenticated (shouldn't happen with correct flow)
+            if (!authSliceLoading && !isAuthenticated && !isAuthCookiePresent) {
+                router.replace('/login'); // Use replace to avoid adding to history stack
             }
-        }, [authSliceLoading, isAuthenticated, router]);
+        }, [authSliceLoading, isAuthenticated, isAuthCookiePresent, router]);
 
-        if (authSliceLoading) {
+        // If auth state is still being determined (initial check or API call) OR if auth cookie exists but isAuthenticated is false (rehydrating)
+        if (authSliceLoading || (isAuthCookiePresent && !isAuthenticated)) {
             return <AuthLoading />;
         }
 
-        if (!isAuthenticated) {
-            return <AuthLoading />;
+        // If authenticated, render the wrapped component
+        if (isAuthenticated) {
+            return <WrappedComponent {...props} />;
         }
 
-        return <WrappedComponent {...props} />;
+        // If not authenticated and not loading, this case might be hit briefly before useEffect redirects
+        // We can also return loading here or null, depending on desired behavior before redirect
+        return <AuthLoading />;
     };
 
     AuthComponent.displayName = `WithAuthGuard(${WrappedComponent.displayName || WrappedComponent.name || 'Component'})`;

@@ -10,6 +10,8 @@ import { setLoginPending, setLoginSuccess, setLoginError, setLogout } from '@/re
 import { loginUser } from '@/services/authService';
 import type { RootState, AppDispatch } from '@/redux/store'; // Assuming you have these types in your store setup
 import { LogIn, Mail, KeyRound } from 'lucide-react';
+import { setAuthCookie } from '@/utils/cookies';
+import { removeAuthCookie } from '@/utils/cookies';
 
 // Validation Schema
 const schema = yup.object().shape({
@@ -49,18 +51,14 @@ export default function LoginPage() {
     setApiError(null);
     try {
       const response = await loginUser(data);
-      localStorage.setItem('token', response.token);
-      // Optionally, store user data in localStorage if needed, but Redux state is primary
-      // localStorage.setItem('user', JSON.stringify(response.user));
+      setAuthCookie(response.token);
       dispatch(setLoginSuccess({ user: response.user, token: response.token }));
       router.push('/dashboard');
     } catch (err: any) {
       const errorMessage = err.message || 'An unexpected error occurred.';
       dispatch(setLoginError(errorMessage));
       setApiError(errorMessage);
-      // Clear token and user from localStorage if login fails and they were somehow set
-      localStorage.removeItem('token');
-      // localStorage.removeItem('user'); // if you were storing user
+      removeAuthCookie();
     }
   };
 

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAuthCookie } from '@/utils/cookies';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -20,9 +21,26 @@ interface ErrorResponse {
   // Add other potential error properties
 }
 
+// Create axios instance with default config
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add request interceptor to add auth token
+api.interceptors.request.use((config) => {
+  const token = getAuthCookie();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 export const loginUser = async (credentials: LoginCredentials): Promise<LoginResponse> => {
   try {
-    const response = await axios.post<LoginResponse>(`${API_URL}/auth/login`, credentials);
+    const response = await api.post<LoginResponse>('/auth/login', credentials);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
@@ -31,5 +49,18 @@ export const loginUser = async (credentials: LoginCredentials): Promise<LoginRes
       throw new Error(errorData.message || 'Login failed');
     }
     throw new Error('An unexpected error occurred during login.');
+  }
+};
+
+// Add a function to check auth status
+export const checkAuthStatus = async () => {
+  try {
+    const token = getAuthCookie();
+    if (!token) return false;
+    
+    const response = await api.get('/auth/verify'); // Assuming a backend endpoint to verify token
+    return response.data.isValid;
+  } catch (error) {
+    return false;
   }
 };
