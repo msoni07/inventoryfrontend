@@ -44,4 +44,15 @@ export const getMedicines = async (params: GetMedicinesParams): Promise<GetMedic
     console.error('Error fetching medicines:', error);
     throw error; // Re-throw the error for the component to handle
   }
+};
+
+// Function to fetch a single medicine by ID
+export const getMedicineDetails = async (id: string): Promise<Medicine> => {
+  try {
+    const response = await api.get(`/inventory/medicines/${id}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching medicine details:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch medicine details.');
+  }
 }; 

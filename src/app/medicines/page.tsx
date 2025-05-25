@@ -8,9 +8,10 @@ import { ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from 'luci
 import { format } from 'date-fns'; // For formatting dates
 import { cn } from '@/lib/utils'; // Import the cn utility
 import withAuthGuard from '@/Auth/withAuthGuard'; // Import the HOC
+import { useRouter, useSearchParams } from 'next/navigation'; // Import useRouter and useSearchParams
 
 // Define the shape of a medicine item based on your API response
-interface Medicine {
+export interface Medicine {
   _id: string;
   name: string;
   manufacturer: string;
@@ -44,45 +45,90 @@ interface FilterState {
   // Add other filterable fields here
 }
 
+// Define filterable columns and their corresponding input types/labels
+const filterableColumns = [
+  { key: 'name', label: 'Filter by Name', type: 'text' },
+  { key: 'manufacturer', label: 'Filter by Manufacturer', type: 'text' },
+  { key: 'saltComposition', label: 'Filter by Salt Composition', type: 'text' },
+  { key: 'expiryDate', label: 'Filter by Expiry Date', type: 'date' }, // Using type 'date' for potential date picker
+  // Add other filterable columns here
+];
+
 function ProductsPage() {
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [limit] = useState(10); // Keep limit constant for simplicity in this example
-  const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
-  const [filters, setFilters] = useState<FilterState>({}); // Add filter state
-  const [searchTerm, setSearchTerm] = useState<string>(''); // Add search term state
+
+  const router = useRouter();
+  const searchParams = useSearchParams(); // Initialize useSearchParams
+
+  // Initialize state from URL query parameters on mount
+  const initialPage = parseInt(searchParams.get('page') || '1', 10);
+  const initialSearchTerm = searchParams.get('search') || '';
+  const initialFilters: FilterState = {};
+  // Dynamically initialize filters from URL params
+  filterableColumns.forEach(col => {
+    const paramValue = searchParams.get(col.key);
+    if (paramValue !== null) {
+      initialFilters[col.key as keyof FilterState] = paramValue;
+    }
+  });
+  const initialSortBy = searchParams.get('sortBy');
+  const initialSortOrder = searchParams.get('sortOrder') as 'asc' | 'desc' | null;
+  const initialSortConfig = (initialSortBy && initialSortOrder) ? { key: initialSortBy as keyof Medicine, direction: initialSortOrder } : null;
+
+  const [currentPage, setCurrentPage] = useState(initialPage);
+  const [sortConfig, setSortConfig] = useState<SortConfig | null>(initialSortConfig);
+  const [filters, setFilters] = useState<FilterState>(initialFilters);
+  const [searchTerm, setSearchTerm] = useState<string>(initialSearchTerm);
 
   // Use a ref to track if the effect has run its initial pass
   const effectRan = useRef(false);
 
+  // Effect to sync state with URL and fetch data
   useEffect(() => {
-    // Define the fetch function inside useEffect to access state variables
+    // Function to update URL based on current state
+    const updateUrl = () => {
+      const params = new URLSearchParams();
+      params.set('page', currentPage.toString());
+      if (searchTerm) {
+        params.set('search', searchTerm);
+      }
+      Object.keys(filters).forEach(key => {
+        const filterValue = filters[key as keyof FilterState];
+        if (filterValue !== undefined && filterValue !== null && filterValue !== '') {
+          params.set(key, filterValue);
+        }
+      });
+      if (sortConfig) {
+        params.set('sortBy', sortConfig.key as string);
+        params.set('sortOrder', sortConfig.direction);
+      }
+      router.replace(`?${params.toString()}`);
+    };
+
+    // Define the fetch function inside useEffect
     const fetchMedicines = async () => {
       setLoading(true);
       setError(null);
       try {
-        // Build params object conditionally, excluding empty filter/search values
-        const params: any = { // Use any for now to easily spread, or build a proper type
+        // Build params object from state for API call
+        const params: any = { // Use any for now or build a proper type if needed for the API call
           page: currentPage,
           limit: limit,
           ...(sortConfig && { sortBy: sortConfig.key, sortOrder: sortConfig.direction }),
+          ...(searchTerm && { search: searchTerm }),
+          ...filters, // Spread the filters state directly
         };
 
-        // Add filters to params only if they have a non-empty value
-        Object.keys(filters).forEach(key => {
-          const filterValue = filters[key as keyof FilterState];
-          if (filterValue !== undefined && filterValue !== null && filterValue !== '') {
-            params[key] = filterValue;
+        // Clean up params by removing empty filter values before API call
+        Object.keys(params).forEach(key => {
+          if (params[key] === '' || params[key] === null || params[key] === undefined) {
+            delete params[key];
           }
         });
-
-        // Add search term to params only if it has a non-empty value
-        if (searchTerm !== '') {
-          params.search = searchTerm;
-        }
 
         const data = await getMedicines(params);
         setMedicines(data.medicines);
@@ -94,16 +140,25 @@ function ProductsPage() {
       }
     };
 
-    // Prevent fetching on the very first render (part of Strict Mode double render)
+    // Sync URL and fetch data when relevant state changes, preventing initial Strict Mode double run
     if (!effectRan.current) {
       effectRan.current = true;
-      return; // Skip the fetch on the first run
+      // On initial mount, state is already set from URL, just fetch data
+      if (initialPage === currentPage && initialSearchTerm === searchTerm && JSON.stringify(initialFilters) === JSON.stringify(filters) && JSON.stringify(initialSortConfig) === JSON.stringify(sortConfig)) {
+        fetchMedicines();
+      } else {
+        // If initial state from URL somehow doesn't match current state (shouldn't happen with correct init), sync URL and then fetch
+        updateUrl();
+        fetchMedicines();
+      }
+      return;
     }
 
-    // Fetch data on subsequent renders or when dependencies change
+    // On subsequent renders triggered by state changes, update URL and fetch data
+    updateUrl();
     fetchMedicines();
 
-  }, [currentPage, limit, sortConfig, filters, searchTerm]); // Add searchTerm to dependencies
+  }, [currentPage, limit, sortConfig, filters, searchTerm]); // Dependencies trigger sync and fetch
 
   const handleSort = (key: keyof Medicine) => {
     let direction: SortConfig['direction'] = 'asc';
@@ -113,18 +168,12 @@ function ProductsPage() {
       } else if (sortConfig.direction === 'desc') {
         // If already descending, reset sorting
         setSortConfig(null);
-        // Reset to first page if sorting is removed
-        if (currentPage !== 1) {
-          setCurrentPage(1);
-        }
+        setCurrentPage(1); // Reset to first page
         return;
       }
     }
     setSortConfig({ key, direction });
-    // Reset to first page when sorting changes for a new column or direction
-    if (currentPage !== 1) {
-      setCurrentPage(1);
-    }
+    setCurrentPage(1); // Reset to first page
   };
 
   // Helper to get sort icon
@@ -150,40 +199,26 @@ function ProductsPage() {
     }
   };
 
-  // Handle filter input change
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFilters(prevFilters => ({
       ...prevFilters,
       [name]: value
     }));
-    // Reset to first page when filters change
-    setCurrentPage(1);
+    setCurrentPage(1); // Reset to first page
   };
 
-  // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    // Reset to first page when search term changes
-    setCurrentPage(1);
+    setCurrentPage(1); // Reset to first page
   };
 
-  // Handle reset button click
   const handleReset = () => {
     setCurrentPage(1);
     setSortConfig(null);
     setFilters({}); // Reset filters
     setSearchTerm(''); // Reset search term
   };
-
-  // Define filterable columns and their corresponding input types/labels
-  const filterableColumns = [
-    { key: 'name', label: 'Filter by Name', type: 'text' },
-    { key: 'manufacturer', label: 'Filter by Manufacturer', type: 'text' },
-    { key: 'saltComposition', label: 'Filter by Salt Composition', type: 'text' },
-    { key: 'expiryDate', label: 'Filter by Expiry Date', type: 'date' }, // Using type 'date' for potential date picker
-    // Add other filterable columns here
-  ];
 
   return (
     <div className="p-6">
@@ -218,6 +253,7 @@ function ProductsPage() {
               name={filterCol.key}
               value={filters[filterCol.key as keyof FilterState] || ''}
               onChange={handleFilterChange}
+              placeholder={filterCol.label}
               className="block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2"
             />
           </div>
@@ -268,7 +304,11 @@ function ProductsPage() {
               </TableHeader>
               <TableBody>
                 {medicines.map((medicine) => (
-                  <TableRow key={medicine._id}>
+                  <TableRow
+                    key={medicine._id}
+                    onClick={() => router.push(`/medicines/${medicine._id}`)} // Add onClick for navigation
+                    className="cursor-pointer hover:bg-gray-100" // Add cursor and hover style
+                  >
                     <TableCell>{medicine.name}</TableCell>
                     <TableCell>{medicine.manufacturer}</TableCell>
                     <TableCell>{medicine.saltComposition}</TableCell>
