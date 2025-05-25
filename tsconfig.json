@@ -22,7 +22,8 @@
       "@/*": ["./src/*"],
       "@/redux/*": ["./redux/*"],
       "@/services/*": ["./services/*"],
-      "@/Auth/*": ["./Auth/*"]
+      "@/Auth/*": ["./Auth/*"],
+      "@/lib/*": ["./lib/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
