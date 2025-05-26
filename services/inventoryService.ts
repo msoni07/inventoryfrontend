@@ -34,6 +34,24 @@ interface GetMedicinesResponse {
   totalCount: number;
 }
 
+// Define the shape of the data for adding a new medicine
+interface AddMedicineData {
+  name: string;
+  manufacturer: string;
+  saltComposition: string;
+  batchNumber: string;
+  expiryDate: string; // ISO string format
+  mrp: number;
+  purchasePrice: number;
+  quantityInStock: number;
+  hsnCode: string;
+  gstPercentage: number;
+  scheduleType: string;
+  barcode: string;
+  // supplier: string; // Assuming supplier is an ID string
+  // Add other required fields as per your API
+}
+
 export const getMedicines = async (params: GetMedicinesParams): Promise<GetMedicinesResponse> => {
   try {
     const response = await api.get<GetMedicinesResponse>('/inventory/medicines', {
@@ -54,5 +72,38 @@ export const getMedicineDetails = async (id: string): Promise<Medicine> => {
   } catch (error: any) {
     console.error('Error fetching medicine details:', error);
     throw new Error(error.response?.data?.message || 'Failed to fetch medicine details.');
+  }
+};
+
+// Function to add a new medicine
+export const addMedicine = async (data: AddMedicineData): Promise<Medicine> => {
+  try {
+    const response = await api.post<Medicine>('/inventory/medicines', data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error adding medicine:', error);
+    throw new Error(error.response?.data?.message || 'Failed to add medicine.');
+  }
+};
+
+// Function to delete a medicine by ID
+export const deleteMedicine = async (id: string): Promise<void> => {
+  try {
+    await api.delete(`/inventory/medicines/${id}`);
+    // No need to return data for a successful deletion
+  } catch (error: any) {
+    console.error('Error deleting medicine:', error);
+    throw new Error(error.response?.data?.message || 'Failed to delete medicine.');
+  }
+};
+
+// Function to update an existing medicine by ID
+export const updateMedicine = async (id: string, data: AddMedicineData): Promise<Medicine> => {
+  try {
+    const response = await api.put<Medicine>(`/inventory/medicines/${id}`, data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error updating medicine:', error);
+    throw new Error(error.response?.data?.message || 'Failed to update medicine.');
   }
 }; 
