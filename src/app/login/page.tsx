@@ -67,7 +67,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-white shadow-xl rounded-lg p-8">
         <div className="text-center mb-8">
           <LogIn className="mx-auto text-blue-600 h-12 w-12 mb-4" />
-          <h1 className="text-3xl font-bold text-gray-800">Welcome Back!</h1>
+          <h1 className="text-3xl font-bold text-gray-800">Welcome MedInvent</h1>
           <p className="text-gray-600 mt-2">Sign in to access your inventory dashboard.</p>
         </div>
 
@@ -141,12 +141,6 @@ export default function LoginPage() {
             </button>
           </div>
         </form>
-        <p className="mt-8 text-center text-sm text-gray-600">
-          Don&apos;t have an account?{' '}
-          <a href="/signup" className="font-medium text-blue-600 hover:text-blue-500">
-            Sign Up
-          </a>
-        </p>
       </div>
     </div>
   );

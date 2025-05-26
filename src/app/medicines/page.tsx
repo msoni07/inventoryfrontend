@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { getMedicines } from '@/services/inventoryService'; // Import the new service function
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'; // Assuming you have a shadcn/ui table component
 import { Button } from '@/components/ui/button'; // Assuming shadcn/ui button
-import { ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'; // Icons for pagination and sorting
+import { ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2 } from 'lucide-react'; // Icons for pagination and sorting
 import { format } from 'date-fns'; // For formatting dates
 import { cn } from '@/lib/utils'; // Import the cn utility
 import withAuthGuard from '@/Auth/withAuthGuard'; // Import the HOC
@@ -62,7 +62,7 @@ function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(1);
-  const [limit] = useState(10); // Keep limit constant for simplicity in this example
+  const [limit] = useState(6); // Change limit to 6 per page
 
   const router = useRouter();
   const searchParams = useSearchParams(); // Initialize useSearchParams
@@ -156,25 +156,21 @@ function ProductsPage() {
         params.set('sortBy', sortConfig.key as string);
         params.set('sortOrder', sortConfig.direction);
       }
+      // Use router.replace to avoid adding to history stack
       router.replace(`?${params.toString()}`);
     };
 
-    // Sync URL and fetch data when relevant state changes, preventing initial Strict Mode double run
+    updateUrl(); // Always sync URL when state changes
+
+    // Use the ref to prevent the first fetch on initial mount in Strict Mode
     if (!effectRan.current) {
       effectRan.current = true;
-      // On initial mount, state is already set from URL, just fetch data
-      if (initialPage === currentPage && initialSearchTerm === searchTerm && JSON.stringify(initialFilters) === JSON.stringify(filters) && JSON.stringify(initialSortConfig) === JSON.stringify(sortConfig)) {
-        fetchMedicines();
-      } else {
-        // If initial state from URL somehow doesn't match current state (shouldn't happen with correct init), sync URL and then fetch
-        updateUrl();
-        fetchMedicines();
-      }
+      // Skip fetch on the very first render (the first of the two runs in Strict Mode)
       return;
     }
 
-    // On subsequent renders triggered by state changes, update URL and fetch data
-    updateUrl();
+    // On subsequent renders triggered by state changes (including the second run in Strict Mode),
+    // or whenever dependencies change, fetch data.
     fetchMedicines();
 
   }, [currentPage, limit, sortConfig, filters, searchTerm]); // Dependencies trigger sync and fetch
@@ -283,7 +279,7 @@ function ProductsPage() {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Medicines</h1>
+        <div>{/* Empty div to push the button to the right */}</div>
         <Button onClick={() => router.push('/medicines/add')} className="bg-sky-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">Add Medicine</Button>
       </div>
 
@@ -383,11 +379,11 @@ function ProductsPage() {
                           <Button variant="outline" size="sm" onClick={(e) => {
                             e.stopPropagation();
                             router.push(`/medicines/edit/${medicine._id}`);
-                          }}>Edit</Button>
+                          }} className="mr-1"><Pencil size={14} /></Button>
                           <Button variant="destructive" size="sm" onClick={(e) => {
                             e.stopPropagation();
                             openConfirmDialog(medicine._id); // Open custom dialog instead of default confirm
-                          }}>Delete</Button>
+                          }} className="border border-gray-200"><Trash2 size={14} /></Button>
                         </TableCell>
                         <TableCell>{medicine.name}</TableCell>
                         <TableCell>{medicine.manufacturer}</TableCell>
@@ -403,6 +399,17 @@ function ProductsPage() {
                         <TableCell>{medicine.barcode}</TableCell>
                       </TableRow>
                     ))}
+                    {/* Add empty rows if medicines are less than the limit */}
+                    {medicines.length > 0 && medicines.length < limit && (
+                      Array.from({ length: limit - medicines.length }).map((_, index) => (
+                        <TableRow key={`empty-${index}`}>
+                          {/* Render empty cells for each column */}
+                          {[...Array(13)].map((_, cellIndex) => (
+                            <TableCell key={`empty-${index}-${cellIndex}`}>&nbsp;</TableCell>
+                          ))}
+                        </TableRow>
+                      ))
+                    )}
                     {medicines.length === 0 && !loading && (
                       <TableRow>
                         <TableCell colSpan={12} className="text-center">No medicines found.</TableCell>
@@ -444,6 +451,26 @@ function ProductsPage() {
                   >
                     Next <ChevronRight size={16} className="ml-2" />
                   </Button>
+                </div>
+                {/* Page Jump Input */}
+                <div className="flex items-center space-x-2">
+                  <span>Go to page</span>
+                  <input
+                    type="number"
+                    value={currentPage}
+                    onChange={(e) => {
+                      const page = parseInt(e.target.value, 10);
+                      if (!isNaN(page) && page >= 1 && page <= totalPages) {
+                        setCurrentPage(page);
+                      } else if (e.target.value === '') {
+                        // Allow clearing the input
+                        // Optionally handle this state, e.g., set a temporary invalid state
+                      }
+                    }}
+                    className="w-16 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-1 text-center"
+                    min="1"
+                    max={totalPages}
+                  />
                 </div>
               </div>
             </div>

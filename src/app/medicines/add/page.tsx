@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { addMedicine, getMedicineDetails, updateMedicine } from '@/services/inventoryService'; // Import service functions
 import withAuthGuard from '@/Auth/withAuthGuard'; // Apply the auth guard
@@ -46,6 +46,9 @@ function AddMedicinePage() {
     const params = useParams();
     const medicineId = params.id as string | undefined;
 
+    // Add a ref to track the first render
+    const effectRan = useRef(false);
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prevData => ({
@@ -85,6 +88,13 @@ function AddMedicinePage() {
 
     // Fetch medicine data if in edit mode
     useEffect(() => {
+        // Use the ref to prevent the first fetch on initial mount in Strict Mode
+        if (!effectRan.current) {
+            effectRan.current = true;
+            // Skip fetch on the very first render (the first of the two runs in Strict Mode)
+            return;
+        }
+
         if (medicineId) {
             setLoading(true);
             const fetchDetails = async () => {
