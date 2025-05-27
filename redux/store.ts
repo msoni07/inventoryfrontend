@@ -1,5 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './slices/authSlice'; // Keep as .js for now, will be handled by allowJs
+import { useDispatch } from 'react-redux'; // Import useDispatch
 
 export const store = configureStore({
   reducer: {
@@ -11,3 +12,6 @@ export const store = configureStore({
 export type RootState = ReturnType<typeof store.getState>;
 // Inferred type: {auth: AuthState}
 export type AppDispatch = typeof store.dispatch;
+
+// Add a typed version of the useDispatch hook
+export const useAppDispatch = () => useDispatch<AppDispatch>();

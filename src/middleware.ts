@@ -7,7 +7,6 @@ const publicRoutes = ['/login', '/register', '/forgot-password'];
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('auth_token')?.value;
   const { pathname } = request.nextUrl;
-
   // Allow public routes
   if (publicRoutes.includes(pathname)) {
     // If user is already logged in and tries to access login page, redirect to dashboard
