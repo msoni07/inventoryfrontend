@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getAuthCookie } from '@/utils/cookies';
 import toast from 'react-hot-toast';
 import { removeAuthCookie } from '@/utils/cookies';
-import {api} from '../../services/authService';
+import {api} from '@/services/authService';
 
 const initialState = {
   user: null,

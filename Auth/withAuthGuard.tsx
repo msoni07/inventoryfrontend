@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { RootState } from '@/redux/store';
 import React from 'react';
 import { getAuthCookie } from '@/utils/cookies';
-import { fetchUserDetails } from '../redux/slices/authSlice';
+import { fetchUserDetails } from '@/redux/slices/authSlice';
 import { useAppDispatch } from '@/redux/store';
 
 // Optional: Define a simple loading component

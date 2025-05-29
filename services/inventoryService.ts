@@ -1,4 +1,4 @@
-import { api } from './authService'; // Assuming the configured axios instance is exported as 'api'
+import { api } from '@/services/authService'; // Assuming the configured axios instance is exported as 'api'
 
 interface Medicine {
   _id: string;

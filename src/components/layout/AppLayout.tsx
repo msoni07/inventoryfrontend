@@ -36,7 +36,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     const menuItems = [
         { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/medicines', label: 'Medicines', icon: Package },
-        { href: '/purchases', label: 'Purchases', icon: ShoppingCart },
+        { href: '/purchases', label: 'Create Bill', icon: ShoppingCart },
         { href: '/sales', label: 'Sales', icon: LineChart },
         { href: '/stock', label: 'Stock Management', icon: Archive },
         { href: '/reports', label: 'Reports', icon: LineChart }, // Can use a more specific icon if available
